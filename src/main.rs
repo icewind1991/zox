@@ -127,8 +127,6 @@ fn main() -> Result<(), MainError> {
                         time: now,
                     })
                 }
-
-                dbg!(existing);
             }
         }
 
