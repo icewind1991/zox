@@ -1,7 +1,7 @@
+use main_error::MainError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::time::{SystemTime, UNIX_EPOCH};
-use main_error::MainError;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct History {
@@ -133,7 +133,7 @@ fn main() -> Result<(), MainError> {
         let total = history.iter().fold(0.0, |sum, item| sum + item.rank);
 
         if total > 9000.0 {
-            for item in  history.iter_mut() {
+            for item in history.iter_mut() {
                 item.rank *= 0.99;
             }
         }
