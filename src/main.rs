@@ -83,6 +83,11 @@ fn now() -> u64 {
 fn main() -> Result<(), MainError> {
     let args = Args::from_env();
 
+    if args.help {
+        println!("zox [-h][-l][-r][-t] args");
+        return Ok(());
+    }
+
     let home = home::home_dir().expect("Cant get home directory");
     let history_path = home.join(".z");
 
@@ -93,11 +98,6 @@ fn main() -> Result<(), MainError> {
         .unwrap();
 
     let now = now();
-
-    if args.help {
-        println!("zox [-h][-l][-r][-t] args");
-        return Ok(());
-    }
 
     let history = reader
         .deserialize::<History>()
