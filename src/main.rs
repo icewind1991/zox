@@ -1,6 +1,7 @@
 use main_error::MainError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::io::{stdout, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -146,6 +147,22 @@ fn main() -> Result<(), MainError> {
         }
 
         writer.flush()?;
+
+        return Ok(());
+    }
+
+    if args.filter.is_empty() {
+        let mut history: Vec<_> = history_result
+            .map(|history| history.collect())
+            .unwrap_or_default();
+
+        history.sort_by(|a, b| b.rank.partial_cmp(&a.rank).unwrap());
+
+        let stdout = stdout();
+        let mut handle = stdout.lock();
+        for item in history {
+            let _ = writeln!(&mut handle, "{}|{}|{}", item.path, item.rank, item.time);
+        }
 
         return Ok(());
     }
