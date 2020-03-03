@@ -91,22 +91,20 @@ fn main() -> Result<(), MainError> {
     let home = home::home_dir().expect("Cant get home directory");
     let history_path = home.join(".z");
 
-    let mut reader = csv::ReaderBuilder::new()
+    let history_result = csv::ReaderBuilder::new()
         .delimiter(b'|')
         .has_headers(false)
         .from_path(history_path.clone())
-        .unwrap();
+        .map(|reader| reader.into_deserialize::<History>().filter_map(Result::ok));
 
     let now = now();
-
-    let history = reader
-        .deserialize::<History>()
-        .filter_map(|result| result.ok());
 
     if args.add {
         let home = home.to_str().expect("Home path not valid utf8").to_string();
 
-        let mut history: Vec<_> = history.collect();
+        let mut history: Vec<_> = history_result
+            .map(|history| history.collect())
+            .unwrap_or_default();
 
         for path in args.filter {
             if path != home {
@@ -152,24 +150,26 @@ fn main() -> Result<(), MainError> {
         return Ok(());
     }
 
-    let matches = history.filter(|item| item.matches(&args.filter));
+    if let Ok(history) = history_result {
+        let matches = history.filter(|item| item.matches(&args.filter));
 
-    if args.list {
-        for item in matches {
-            println!("{:<11}{}", item.get_sort(args.sort, now), item.path);
-        }
-    } else {
-        let mut matches: Vec<History> = matches.collect();
-        matches.sort_by(
-            |a, b| match a.get_sort(args.sort, now) - b.get_sort(args.sort, now) {
-                diff if diff < 0.0 => Ordering::Greater,
-                diff if diff > 0.0 => Ordering::Less,
-                _ => Ordering::Equal,
-            },
-        );
+        if args.list {
+            for item in matches {
+                println!("{:<11}{}", item.get_sort(args.sort, now), item.path);
+            }
+        } else {
+            let mut matches: Vec<History> = matches.collect();
+            matches.sort_by(
+                |a, b| match a.get_sort(args.sort, now) - b.get_sort(args.sort, now) {
+                    diff if diff < 0.0 => Ordering::Greater,
+                    diff if diff > 0.0 => Ordering::Less,
+                    _ => Ordering::Equal,
+                },
+            );
 
-        if let Some(first) = matches.first() {
-            println!("{}", first.path);
+            if let Some(first) = matches.first() {
+                println!("{}", first.path);
+            }
         }
     }
 
