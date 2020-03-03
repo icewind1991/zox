@@ -170,20 +170,20 @@ fn main() -> Result<(), MainError> {
     if let Ok(history) = history_result {
         let matches = history.filter(|item| item.matches(&args.filter));
 
+        let mut matches: Vec<History> = matches.collect();
+        matches.sort_by(
+            |a, b| match a.get_sort(args.sort, now) - b.get_sort(args.sort, now) {
+                diff if diff < 0.0 => Ordering::Greater,
+                diff if diff > 0.0 => Ordering::Less,
+                _ => Ordering::Equal,
+            },
+        );
+
         if args.list {
             for item in matches {
                 println!("{:<11}{}", item.get_sort(args.sort, now), item.path);
             }
         } else {
-            let mut matches: Vec<History> = matches.collect();
-            matches.sort_by(
-                |a, b| match a.get_sort(args.sort, now) - b.get_sort(args.sort, now) {
-                    diff if diff < 0.0 => Ordering::Greater,
-                    diff if diff > 0.0 => Ordering::Less,
-                    _ => Ordering::Equal,
-                },
-            );
-
             if let Some(first) = matches.first() {
                 println!("{}", first.path);
             }
