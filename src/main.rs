@@ -61,7 +61,9 @@ impl History {
     }
 
     pub fn matches(&self, pattern: &[String]) -> bool {
-        pattern.iter().all(|pat| self.path.contains(pat))
+        pattern
+            .iter()
+            .all(|pat| self.path.to_lowercase().contains(pat))
     }
 
     pub fn get_sort(&self, sort: SortBy, current_time: u64) -> f64 {
@@ -168,7 +170,8 @@ fn main() -> Result<(), MainError> {
     }
 
     if let Ok(history) = history_result {
-        let matches = history.filter(|item| item.matches(&args.filter));
+        let filter: Vec<String> = args.filter.iter().map(|s| s.to_lowercase()).collect();
+        let matches = history.filter(|item| item.matches(&filter));
 
         let mut matches: Vec<History> = matches.collect();
         matches.sort_by(
