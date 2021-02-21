@@ -1,7 +1,6 @@
 use main_error::MainError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::convert::Infallible;
 use std::io::{stdout, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -43,10 +42,11 @@ impl Args {
             },
             list: args.contains("-l"),
             filter: args
-                .free_from_fn::<_, Infallible>(|free| {
-                    Ok(free.split(' ').map(str::to_ascii_lowercase).collect())
-                })
-                .unwrap_or_default(),
+                .finish()
+                .into_iter()
+                .filter_map(|s| s.into_string().ok())
+                .map(|s| s.to_ascii_lowercase())
+                .collect(),
         }
     }
 }
@@ -216,17 +216,23 @@ fn main() -> Result<(), MainError> {
         let matches = history.filter(|item| item.matches(&args.filter));
 
         let mut matches: Vec<History> = matches.collect();
-        matches.sort_by(
-            |a, b| match a.get_sort(args.sort, now) - b.get_sort(args.sort, now) {
-                diff if diff < 0.0 => Ordering::Greater,
-                diff if diff > 0.0 => Ordering::Less,
-                _ => Ordering::Equal,
-            },
-        );
+        matches.sort_by(|a, b| {
+            b.get_sort(args.sort, now)
+                .partial_cmp(&a.get_sort(args.sort, now))
+                .unwrap_or(Ordering::Equal)
+        });
 
         if args.list {
+            let out = stdout();
+            let mut out = out.lock();
             for item in matches {
-                println!("{:<11}{}", item.get_sort(args.sort, now), item.path);
+                writeln!(
+                    &mut out,
+                    "{:<11}{}",
+                    item.get_sort(args.sort, now),
+                    item.path
+                )
+                .ok();
             }
         } else {
             if let Some(first) = matches.first() {
