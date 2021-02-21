@@ -66,9 +66,15 @@ impl History {
     }
 
     pub fn matches(&self, pattern: &[String]) -> bool {
-        pattern
-            .iter()
-            .all(|pat| self.path.to_lowercase().contains(pat))
+        let mut remaining = self.path.as_str();
+
+        for pat in pattern {
+            match remaining.find(pat) {
+                Some(index) => remaining = &remaining[index + pat.len()..],
+                None => return false,
+            }
+        }
+        true
     }
 
     pub fn get_sort(&self, sort: SortBy, current_time: u64) -> f64 {
@@ -81,13 +87,35 @@ impl History {
 }
 
 #[test]
-fn test_history_match() {
+fn test_history_match_order() {
     assert!(History {
         path: "/foo/bar".into(),
         time: 0,
         rank: 0.0,
     }
-    .matches(&["foo".into(), "bar".into()]))
+    .matches(&["foo".into(), "bar".into()]));
+    assert!(!History {
+        path: "/foo/bar".into(),
+        time: 0,
+        rank: 0.0,
+    }
+    .matches(&["bar".into(), "foo".into()]));
+}
+
+#[test]
+fn test_history_match_repeat() {
+    assert!(History {
+        path: "/foo/foo".into(),
+        time: 0,
+        rank: 0.0,
+    }
+    .matches(&["foo".into(), "foo".into()]));
+    assert!(!History {
+        path: "/foo/bar".into(),
+        time: 0,
+        rank: 0.0,
+    }
+    .matches(&["foo".into(), "foo".into()]));
 }
 
 fn now() -> u64 {
