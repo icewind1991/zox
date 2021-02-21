@@ -1,6 +1,7 @@
 use main_error::MainError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::convert::Infallible;
 use std::io::{stdout, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -41,7 +42,11 @@ impl Args {
                 SortBy::Frecent
             },
             list: args.contains("-l"),
-            filter: args.free().unwrap_or_default(),
+            filter: args
+                .free_from_fn::<_, Infallible>(|free| {
+                    Ok(free.split(' ').map(str::to_ascii_lowercase).collect())
+                })
+                .unwrap_or_default(),
         }
     }
 }
@@ -73,6 +78,16 @@ impl History {
             SortBy::Frecent => self.frecent(current_time),
         }
     }
+}
+
+#[test]
+fn test_history_match() {
+    assert!(History {
+        path: "/foo/bar".into(),
+        time: 0,
+        rank: 0.0,
+    }
+    .matches(&["foo".into(), "bar".into()]))
 }
 
 fn now() -> u64 {
@@ -170,8 +185,7 @@ fn main() -> Result<(), MainError> {
     }
 
     if let Ok(history) = history_result {
-        let filter: Vec<String> = args.filter.iter().map(|s| s.to_lowercase()).collect();
-        let matches = history.filter(|item| item.matches(&filter));
+        let matches = history.filter(|item| item.matches(&args.filter));
 
         let mut matches: Vec<History> = matches.collect();
         matches.sort_by(

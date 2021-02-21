@@ -5,8 +5,8 @@ authors = ["Robin Appelman <robin@icewind.nl>"]
 edition = "2018"
 
 [dependencies]
-csv = "1.1"
+csv = "1"
 serde = { version = "1", features = ["derive"] }
-pico-args = "0.3.0"
-home = "0.5.1"
-main_error = "0.1.0"
+pico-args = "0.4"
+home = "0.5"
+main_error = "0.1"
