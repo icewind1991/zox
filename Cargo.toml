@@ -10,3 +10,6 @@ serde = { version = "1", features = ["derive"] }
 pico-args = "0.4"
 home = "0.5"
 main_error = "0.1"
+
+[profile.release]
+lto = true
