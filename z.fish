@@ -3,5 +3,10 @@ function addzhist --on-variable PWD
 end
 
 function z -d "Jump to a recent directory."
-    cd (zox $argv)
+    set -l target (zox $argv)
+    if test $status -eq 0
+        cd $target
+    else
+        return $stats
+    end
 end

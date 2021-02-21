@@ -2,6 +2,7 @@ use main_error::MainError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::io::{stdout, Write};
+use std::process::exit;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -237,6 +238,8 @@ fn main() -> Result<(), MainError> {
         } else {
             if let Some(first) = matches.first() {
                 println!("{}", first.path);
+            } else {
+                exit(1);
             }
         }
     }
