@@ -46,7 +46,6 @@ impl Args {
                 .finish()
                 .into_iter()
                 .filter_map(|s| s.into_string().ok())
-                .map(|s| s.to_ascii_lowercase())
                 .collect(),
         }
     }
@@ -67,7 +66,8 @@ impl History {
     }
 
     pub fn matches(&self, pattern: &[String]) -> bool {
-        let mut remaining = self.path.as_str();
+        let path = self.path.to_ascii_lowercase();
+        let mut remaining = path.as_str();
 
         for pat in pattern {
             match remaining.find(pat) {
@@ -214,7 +214,12 @@ fn main() -> Result<(), MainError> {
     }
 
     if let Ok(history) = history_result {
-        let matches = history.filter(|item| item.matches(&args.filter));
+        let filter: Vec<_> = args
+            .filter
+            .iter()
+            .map(|filter| filter.to_ascii_lowercase())
+            .collect();
+        let matches = history.filter(|item| item.matches(&filter));
 
         let mut matches: Vec<History> = matches.collect();
         matches.sort_by(|a, b| {
